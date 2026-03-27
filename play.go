@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"gitlab.com/gomidi/midi/v2"
- 	"gitlab.com/gomidi/midi/v2/drivers"
 	_ "gitlab.com/gomidi/midi/v2/drivers/rtmididrv"
 )
 
@@ -27,23 +26,24 @@ func play(file string) {
 		return
 	}
 	for _, event := range loadEvents(file) {
-		go sendMsg(event, out)
+		go registerMsg(event)
 	}
 	for wg != 0 {
+		out.Send(<-msgCh)
 	}
 }
 
-func sendMsg(event Event, out drivers.Out) {
+func registerMsg(event Event) {
 	wg++
 	var msg midi.Message
-		if event.velocity > 0 {
-			msg = midi.NoteOn(0, event.key, event.velocity)
-		} else {
-			msg = midi.NoteOff(0, event.key)
-		}
-		time.Sleep(time.Millisecond * time.Duration(event.timedelta))
-		out.Send(msg)
-		wg--
+	if event.velocity > 0 {
+		msg = midi.NoteOn(0, event.key, event.velocity)
+	} else {
+		msg = midi.NoteOff(0, event.key)
+	}
+	time.Sleep(time.Millisecond * time.Duration(event.timedelta))
+	msgCh <- msg
+	wg--
 }
 
 func loadEvents(file string) []Event {
