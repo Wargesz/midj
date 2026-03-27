@@ -8,6 +8,10 @@ import (
 )
 
 const device string = "UMC204HD"
+var (
+	msgCh chan midi.Message
+	eventCh chan Event
+)
 
 type Event struct {
 	key       uint8
@@ -24,9 +28,13 @@ func main() {
 		fmt.Println("noop")
 		return
 	}
-    if os.Args[1] == "kill" {
-        kill()
-    }
+	msgCh = make(chan midi.Message, 5)
+	eventCh = make(chan Event, 5)
+	defer close(msgCh)
+	defer close(eventCh)
+	if os.Args[1] == "kill" {
+		kill()
+	}
 	if os.Args[1] == "play" {
 		play(os.Args[2])
 	}
