@@ -10,10 +10,10 @@ import (
 )
 
 var events []Event
-var delta int32
+var lastTimestamp int32 = 0
 
 func record(file string) {
-	in, err := midi.FindInPort("MIDI Out")
+	in, err := midi.FindInPort(device)
 	if err != nil {
 		fmt.Println("cant find port")
 		return
@@ -37,10 +37,12 @@ func record(file string) {
 }
 
 func callback(msg midi.Message, timestampms int32) {
-    delta = timestampms - delta
+	delta := timestampms - lastTimestamp
+	lastTimestamp = timestampms
 	var channel, key, velocity uint8
-	msg.GetNoteOn(&channel, &key, &velocity)
-	events = append(events, Event{key: key, velocity: velocity, timedelta: delta})
+	if msg.GetNoteOn(&channel, &key, &velocity) && channel == 0 {
+		events = append(events, Event{key: key, velocity: velocity, timedelta: delta})
+	}
 }
 
 func saveEvents(file string, events []Event) {

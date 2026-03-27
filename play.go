@@ -12,7 +12,7 @@ import (
 )
 
 func play(file string) {
-	out, err := midi.FindOutPort("MIDI Out")
+	out, err := midi.FindOutPort(device)
 	if err != nil {
 		fmt.Println("cant find port")
 		return
@@ -23,14 +23,14 @@ func play(file string) {
 		fmt.Println("cant open port")
 		return
 	}
-	var msg midi.Message
+    var msg midi.Message
 	for _, event := range loadEvents(file) {
-		time.Sleep(time.Duration(event.timedelta) * 10)
 		if event.velocity > 0 {
 			msg = midi.NoteOn(0, event.key, event.velocity)
 		} else {
 			msg = midi.NoteOff(0, event.key)
 		}
+		time.Sleep(time.Millisecond * time.Duration(event.timedelta))
 		out.Send(msg)
 	}
 }
