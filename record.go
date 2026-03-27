@@ -11,6 +11,7 @@ import (
 
 var events []Event
 var lastTimestamp int32 = 0
+var store bool = true
 
 func record(file string) {
 	in, err := midi.FindInPort(device)
@@ -29,21 +30,29 @@ func record(file string) {
 		fmt.Println("cant start listener")
 		return
 	}
+	go storeEvents()
 	sig := make(chan os.Signal, 1)
 	signal.Notify(sig, os.Interrupt)
 	<-sig
 	stop()
+	store = false
 	saveEvents(file, events)
 }
 
 func callback(msg midi.Message, timestampms int32) {
-	/*
-	delta := timestampms - lastTimestamp
-	lastTimestamp = timestampms
-	*/
+	go registerEvent(msg, timestampms)
+}
+
+func registerEvent(msg midi.Message, timestampms int32) {
 	var channel, key, velocity uint8
 	if msg.GetNoteOn(&channel, &key, &velocity) {
-		events = append(events, Event{key: key, velocity: velocity, timedelta: timestampms})
+		eventCh <- Event{key: key, velocity: velocity, timedelta: timestampms}
+	}
+}
+
+func storeEvents() {
+	for store {
+		events = append(events, <-eventCh)
 	}
 }
 
