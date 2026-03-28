@@ -37,11 +37,13 @@ func record(file string) {
 }
 
 func callback(msg midi.Message, timestampms int32) {
+	/*
 	delta := timestampms - lastTimestamp
 	lastTimestamp = timestampms
+	*/
 	var channel, key, velocity uint8
-	if msg.GetNoteOn(&channel, &key, &velocity) && channel == 0 {
-		events = append(events, Event{key: key, velocity: velocity, timedelta: delta})
+	if msg.GetNoteOn(&channel, &key, &velocity) {
+		events = append(events, Event{key: key, velocity: velocity, timedelta: timestampms})
 	}
 }
 

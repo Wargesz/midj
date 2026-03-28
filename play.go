@@ -8,8 +8,11 @@ import (
 	"time"
 
 	"gitlab.com/gomidi/midi/v2"
+ 	"gitlab.com/gomidi/midi/v2/drivers"
 	_ "gitlab.com/gomidi/midi/v2/drivers/rtmididrv"
 )
+
+var wg int
 
 func play(file string) {
 	out, err := midi.FindOutPort(device)
@@ -23,8 +26,16 @@ func play(file string) {
 		fmt.Println("cant open port")
 		return
 	}
-    var msg midi.Message
 	for _, event := range loadEvents(file) {
+		go sendMsg(event, out)
+	}
+	for wg != 0 {
+	}
+}
+
+func sendMsg(event Event, out drivers.Out) {
+	wg++
+	var msg midi.Message
 		if event.velocity > 0 {
 			msg = midi.NoteOn(0, event.key, event.velocity)
 		} else {
@@ -32,7 +43,7 @@ func play(file string) {
 		}
 		time.Sleep(time.Millisecond * time.Duration(event.timedelta))
 		out.Send(msg)
-	}
+		wg--
 }
 
 func loadEvents(file string) []Event {

@@ -7,7 +7,7 @@ import (
 	"gitlab.com/gomidi/midi/v2"
 )
 
-const device string = "USB-MIDI"
+const device string = "UMC204HD"
 
 type Event struct {
 	key       uint8
